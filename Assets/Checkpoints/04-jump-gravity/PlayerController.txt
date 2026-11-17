@@ -1,0 +1,60 @@
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+// Checkpoint 04: walking plus gravity and jumping.
+// The Player object also needs a Character Controller component.
+public class PlayerController : MonoBehaviour
+{
+    public float moveSpeed = 5f;
+    public float turnSpeed = 720f;   // degrees per second
+    public float jumpHeight = 1.2f;
+    public float gravity = -20f;
+
+    CharacterController controller;
+    float verticalVelocity;
+
+    void Start()
+    {
+        // Find the component once
+        controller = GetComponent<CharacterController>();
+    }
+
+    void Update()
+    {
+        // 1. Read the keys
+        var keyboard = Keyboard.current;
+        Vector2 input = Vector2.zero;
+        if (keyboard.wKey.isPressed) input.y += 1;
+        if (keyboard.sKey.isPressed) input.y -= 1;
+        if (keyboard.dKey.isPressed) input.x += 1;
+        if (keyboard.aKey.isPressed) input.x -= 1;
+
+        // 2. Make a direction (X is right, Z is forward)
+        Vector3 move = new Vector3(input.x, 0f, input.y);
+
+        // 3. Face where we walk
+        if (move.sqrMagnitude > 0.01f)
+        {
+            Quaternion target = Quaternion.LookRotation(move);
+            transform.rotation = Quaternion.RotateTowards(
+                transform.rotation, target,
+                turnSpeed * Time.deltaTime);
+        }
+
+        // 4. Gravity and jumping
+        if (controller.isGrounded && verticalVelocity < 0f)
+            verticalVelocity = -2f;  // stay snapped down
+
+        if (controller.isGrounded &&
+            keyboard.spaceKey.wasPressedThisFrame)
+            verticalVelocity =
+                Mathf.Sqrt(jumpHeight * -2f * gravity);
+
+        verticalVelocity += gravity * Time.deltaTime;
+
+        // 5. Move, but stop at walls
+        Vector3 velocity = move * moveSpeed
+                         + Vector3.up * verticalVelocity;
+        controller.Move(velocity * Time.deltaTime);
+    }
+}

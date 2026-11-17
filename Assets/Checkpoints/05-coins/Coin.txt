@@ -1,0 +1,42 @@
+using UnityEngine;
+
+// Checkpoint 05: a coin that spins, floats, and is collected by the player.
+// The Coin object needs a Sphere Collider with "Is Trigger" ticked.
+public class Coin : MonoBehaviour
+{
+    public float spinSpeed = 180f;    // degrees per second
+    public float bobHeight = 0.25f;   // how far it floats up and down
+    public float bobSpeed = 2f;
+
+    Vector3 startPosition;
+
+    void Start()
+    {
+        startPosition = transform.position;
+    }
+
+    void Update()
+    {
+        // Spin around the vertical axis
+        transform.Rotate(0f, spinSpeed * Time.deltaTime,
+                         0f, Space.World);
+
+        // Float up and down with a sine wave
+        float offset = Mathf.Sin(Time.time * bobSpeed)
+                       * bobHeight;
+        transform.position = startPosition
+                             + Vector3.up * offset;
+    }
+
+    // Unity calls this when something enters the trigger
+    void OnTriggerEnter(Collider other)
+    {
+        PlayerController player = other.GetComponent<PlayerController>();
+        if (player == null)
+            return;   // only the player collects
+
+        player.coins += 1;
+        Debug.Log("Coins collected: " + player.coins);
+        Destroy(gameObject);
+    }
+}
